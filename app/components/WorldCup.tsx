@@ -26,23 +26,6 @@ function roundLabel(size: number): string {
 
 const SAVE_ROUNDS = new Set([16, 8, 4, 2, 1]);
 
-async function saveRound(round: number, images: string[]) {
-    if (!SAVE_ROUNDS.has(round)) return;
-    try {
-        const res = await fetch('/api/save-round', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ round, images }),
-        });
-        const data = await res.json();
-        if (!data.success) {
-            console.error('save-round failed:', data.message);
-        }
-    } catch (err) {
-        console.error('save-round error:', err);
-    }
-}
-
 export default function WorldCup({ images, onExit }: WorldCupProps) {
     const initialBracket = useMemo(() => shuffle(images), [images]);
     const [bracket, setBracket] = useState<string[]>(initialBracket);
@@ -51,7 +34,28 @@ export default function WorldCup({ images, onExit }: WorldCupProps) {
     const [champion, setChampion] = useState<string | null>(
         initialBracket.length === 1 ? initialBracket[0] : null
     );
-    const [history, setHistory] = useState<string[]>([]);
+    const [saveError, setSaveError] = useState<string | null>(null);
+
+    const saveRound = async (round: number, advancedImages: string[]) => {
+        if (!SAVE_ROUNDS.has(round)) return;
+        try {
+            const res = await fetch('/api/save-round', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ round, images: advancedImages }),
+            });
+            const data = await res.json();
+            if (!data.success) {
+                console.error('save-round failed:', data.message);
+                setSaveError(`라운드 ${round} 저장 실패: ${data.message ?? 'unknown error'}`);
+            } else {
+                setSaveError(null);
+            }
+        } catch (err) {
+            console.error('save-round error:', err);
+            setSaveError(`라운드 ${round} 저장 실패: 네트워크 오류`);
+        }
+    };
 
     if (images.length === 0) {
         return (
@@ -84,7 +88,6 @@ export default function WorldCup({ images, onExit }: WorldCupProps) {
                 setBracket(advanced);
                 setNextRound([]);
                 setPairIndex(0);
-                setHistory((h) => [...h, winner]);
                 return;
             }
             setBracket(shuffle(advanced));
@@ -94,7 +97,6 @@ export default function WorldCup({ images, onExit }: WorldCupProps) {
             setNextRound(newNext);
             setPairIndex(pairIndex + 1);
         }
-        setHistory((h) => [...h, winner]);
     };
 
     const reset = () => {
@@ -103,7 +105,7 @@ export default function WorldCup({ images, onExit }: WorldCupProps) {
         setNextRound([]);
         setPairIndex(0);
         setChampion(fresh.length === 1 ? fresh[0] : null);
-        setHistory([]);
+        setSaveError(null);
     };
 
     if (champion) {
@@ -123,6 +125,9 @@ export default function WorldCup({ images, onExit }: WorldCupProps) {
                     />
                 </div>
                 <p className="text-gray-300 mb-4 text-sm">{champion.split('/').pop()}</p>
+                {saveError && (
+                    <p className="text-red-400 mb-4 text-sm">{saveError}</p>
+                )}
                 <div className="flex gap-3">
                     <button
                         onClick={reset}
@@ -159,6 +164,9 @@ export default function WorldCup({ images, onExit }: WorldCupProps) {
                         <p className="text-green-400 text-xs mt-1">
                             진출자 {bracket.length}명 → public/{bracket.length === 1 ? 'champion' : `round-${bracket.length}`}/ 저장됨
                         </p>
+                    )}
+                    {saveError && (
+                        <p className="text-red-400 text-xs mt-1">⚠ {saveError}</p>
                     )}
                 </div>
                 <div className="flex gap-2">
