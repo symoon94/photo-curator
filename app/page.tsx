@@ -2,10 +2,12 @@
 
 import { useEffect, useState } from 'react';
 import PhotoSelection from './components/PhotoSelection';
+import WorldCup from './components/WorldCup';
 
 export default function Home() {
   const [images, setImages] = useState<string[]>([]);
   const [selectedImages, setSelectedImages] = useState<string[]>([]);
+  const [worldCup, setWorldCup] = useState(false);
 
   useEffect(() => {
     fetch('/api/images')
@@ -35,11 +37,16 @@ export default function Home() {
 
   return (
     <main>
-      <PhotoSelection
-        images={images}
-        selectedImages={selectedImages}
-        onImageSelect={handleImageSelect}
-      />
+      {worldCup ? (
+        <WorldCup images={images} onExit={() => setWorldCup(false)} />
+      ) : (
+        <PhotoSelection
+          images={images}
+          selectedImages={selectedImages}
+          onImageSelect={handleImageSelect}
+          onStartWorldCup={() => setWorldCup(true)}
+        />
+      )}
     </main>
   );
 }
