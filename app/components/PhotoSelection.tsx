@@ -7,9 +7,10 @@ interface PhotoSelectionProps {
     images: string[];
     selectedImages: string[];
     onImageSelect: (imagePath: string, isSelected: boolean) => void;
+    onStartWorldCup?: () => void;
 }
 
-export default function PhotoSelection({ images, selectedImages, onImageSelect }: PhotoSelectionProps) {
+export default function PhotoSelection({ images, selectedImages, onImageSelect, onStartWorldCup }: PhotoSelectionProps) {
     const [currentPage, setCurrentPage] = useState(1);
     const [imagesPerPage, setImagesPerPage] = useState(4);
     const [globalScale, setGlobalScale] = useState(1);
@@ -167,22 +168,38 @@ export default function PhotoSelection({ images, selectedImages, onImageSelect }
                                 Save Selection
                             </button>
                         )}
+                        {images.length >= 2 && onStartWorldCup && (
+                            <button
+                                onClick={onStartWorldCup}
+                                className="px-4 py-2 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-lg hover:from-pink-600 hover:to-purple-600 transition-all transform hover:scale-105 font-medium"
+                            >
+                                🏆 World Cup ({images.length})
+                            </button>
+                        )}
                     </div>
                 </div>
-                <div className="grid grid-cols-2 gap-6 mb-6" style={{
+                <div className={`grid gap-6 mb-6 ${imagesPerPage === 1 ? 'grid-cols-1' : 'grid-cols-2'}`} style={{
                     minHeight: '0',
-                    height: imagesPerPage === 2 ? 'calc(100vh - 220px)' : 'calc(100vh - 220px)'
+                    height: 'calc(100vh - 220px)'
                 }}>
                     {displayedImages.map((image, index) => {
                         const isSelected = isImageSelected(image);
                         return (
                             <div
                                 key={image}
-                                className={`relative border-2 rounded-xl overflow-hidden transition-all bg-gray-800/30
+                                onClick={() => {
+                                    if (!isSelected) {
+                                        onImageSelect(image, true);
+                                        if (currentPage < totalPages) {
+                                            setCurrentPage(currentPage + 1);
+                                        }
+                                    }
+                                }}
+                                className={`relative border-2 rounded-xl overflow-hidden transition-all bg-gray-800/30 cursor-pointer
                                     ${isSelected ? 'border-blue-500 shadow-lg' : 'border-gray-700 hover:border-gray-600'}`}
                                 style={{
                                     width: '100%',
-                                    height: imagesPerPage === 2 ? '100%' : 'calc((100vh - 240px) / 2)',
+                                    height: imagesPerPage === 4 ? 'calc((100vh - 240px) / 2)' : '100%',
                                 }}
                             >
                                 <TransformWrapper
@@ -300,6 +317,7 @@ export default function PhotoSelection({ images, selectedImages, onImageSelect }
                             }}
                             className="px-3 py-1.5 bg-gray-800 border border-gray-700 rounded-lg text-gray-200"
                         >
+                            <option value={1}>1</option>
                             <option value={2}>2</option>
                             <option value={4}>4</option>
                         </select>

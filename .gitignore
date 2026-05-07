@@ -25,6 +25,11 @@
 !/public/images/.gitkeep
 /public/selected/*
 !/public/selected/.gitkeep
+# World Cup 진행 중 자동 생성되는 라운드별 결과 폴더
+/public/round-*/
+/public/champion/
+# 사용자 로컬 백업 폴더
+/public/*_backup/
 
 # misc
 .DS_Store
